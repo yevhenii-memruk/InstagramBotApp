@@ -22,10 +22,11 @@ Features:
 
 
 class InstaBot:
-    def __init__(self, username, password):
+    def __init__(self, username, password, file_name):
         self.username = username
         self.password = password
         self.browser = webdriver.Chrome("chromedriver.exe")
+        self.file_name = file_name
 
     # closing tab and quiting the browser
     def exit(self):
@@ -33,10 +34,10 @@ class InstaBot:
         self.browser.quit()
 
     # checking by xpath if element exist
-    def xpath_existing(self, url):
+    def xpath_existing(self, xpath):
         browser = self.browser
         try:
-            browser.find_element_by_xpath(url)
+            browser.find_element_by_xpath(xpath)
             exist = True
         except NoSuchElementException:
             exist = False
@@ -47,9 +48,10 @@ class InstaBot:
         browser = self.browser
         try:
             browser.get("https://www.instagram.com/")
+            browser.maximize_window()
             browser.implicitly_wait(10)
             # closing pop-up window
-            browser.find_element_by_xpath("/html/body/div[2]/div/div/div/div[2]/button[1]").click()
+            browser.find_element_by_xpath("/html/body/div[2]/div/div/button[1]").click()
             time.sleep(1)
 
             name_tag = browser.find_element_by_name("username")
@@ -63,75 +65,146 @@ class InstaBot:
             for step_typing in self.password:
                 time.sleep(random.uniform(0.1, 0.3))
                 password_tag.send_keys(step_typing)
+
             time.sleep(1)
             password_tag.send_keys(Keys.ENTER)
-            time.sleep(2)
-
+            time.sleep(5)
         except Exception as ex:
             print(ex)
             self.exit()
 
     def open_profile(self, link):
         browser = self.browser
-        browser.get(link)
-        time.sleep(random.randrange(3))
+
+        try:
+            browser.get(link)
+        except NoSuchElementException:
+            print("Sorry, this page isn't available.")
+
+        time.sleep(random.randrange(2, ))
+
+    # scrolling page and grab all url of posts
+    def scrolling_get_urls(self):
+        browser = self.browser
+        all_post = []
+
+        try:
+            posts_num = int(
+                browser.find_element_by_xpath(
+                    "/html/body/div[1]/section/main/div/header/section/ul/li[1]/span/span").text)
+            # 12 posts loads each scrolling
+            if posts_num < 12:
+                loops_count = 1
+            else:
+                loops_count = int(posts_num / 12)
+
+            for x in range(loops_count):
+                time.sleep(random.randrange(1, 2))
+                tag_a = browser.find_elements_by_tag_name("a")
+
+                for href_a in tag_a:
+                    href = href_a.get_attribute("href")
+                    if "/p/" in href:
+                        if href not in all_post:
+                            all_post.append(href)
+
+                browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(random.randrange(3, 5))
+
+            with open(f'{self.file_name}.txt', "w") as file_posts:
+                for z in all_post:
+                    file_posts.write(z + "\n")
+        except Exception as ex:
+            print(ex)
 
     # liking post by certain link
     def like_exactly_post(self, link_post):
         browser = self.browser
-        time.sleep(3)
-        browser.get(link_post)
-        time.sleep(3)
 
-        wrong_userpage = "/html/body/div[1]/section/main/div/h2"
-        if self.xpath_existing(wrong_userpage):
-            print("The post does not exist!")
-        else:
-            print("Post detected! Put our like!")
+        try:
+            time.sleep(3)
+            browser.get(link_post)
+            time.sleep(3)
 
-        like = browser.find_elements_by_css_selector("svg[fill = '#ed4956']")
-        if like:
-            print("Like already put")
-            self.exit()
-        else:
-            browser.find_element_by_xpath(
-                "/html/body/div[1]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button").click()
-            time.sleep(2, 4)
-            self.exit()
+            wrong_userpage = "/html/body/div[1]/section/main/div/h2"
+            if self.xpath_existing(wrong_userpage):
+                print("The post does not exist!")
+            else:
+                print("Post detected! Put our like!")
+
+            like = browser.find_elements_by_css_selector("svg[fill = '#ed4956']")
+            if like:
+                print("Like already put")
+                # self.exit()
+                # !!!!!!!!!!!!!! FIGURE OUT HOW TO CHANGE IT FOR EXPLICITLY EXECUTION
+            else:
+                browser.find_element_by_xpath(
+                    "/html/body/div[1]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button").click()
+                time.sleep(random.randrange(2, 4))
+                # self.exit()
+                # !!!!!!!!!!!!!! FIGURE OUT HOW TO CHANGE IT FOR EXPLICITLY EXECUTION
+        except Exception as ex:
+            print(ex)
 
     def like_by_hash(self, hashtag):
         global posts
         browser = self.browser
 
-        browser.get(f"https://www.instagram.com/explore/tags/{hashtag}/")
-        time.sleep(5)
+        try:
+            browser.get(f"https://www.instagram.com/explore/tags/{hashtag}/")
+            time.sleep(5)
 
-        for x in range(1, 5):
-            browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(random.randrange(3, 5))
+            for x in range(1, 5):
+                browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(random.randrange(3, 5))
 
-            refs = browser.find_elements_by_tag_name("a")
+                refs = browser.find_elements_by_tag_name("a")
 
-            posts = [i.get_attribute("href") for i in refs if "/p/" in i.get_attribute("href")]
-            # for i in refs:
-            #     href = i.get_attribute("href")
-            #     if "/p/" in href:
-            #        posts.append(href)
+                posts = [i.get_attribute("href") for i in refs if "/p/" in i.get_attribute("href")]
+                # for i in refs:
+                #     href = i.get_attribute("href")
+                #     if "/p/" in href:
+                #        posts.append(href)
 
-        for y in posts[0:1]:
-            browser.get(y)
+            for y in posts:
+                browser.get(y)
 
-            like = browser.find_elements_by_css_selector("svg[fill = '#ed4956']")
-            if like:
-                print("Like already put")
-                self.exit()
-            else:
-                browser.find_element_by_xpath(
-                    "//*[@id=\"react-root\"]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button").click()
-                time.sleep(5)
-                self.exit()
+                # check if like already exist
+                like = browser.find_elements_by_css_selector("svg[fill = '#ed4956']")
+                if like:
+                    print("Like already put")
+                    continue
+                elif posts[-1]:
+                    self.exit()
+                else:
+                    browser.find_element_by_xpath(
+                        "//*[@id=\"react-root\"]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button").click()
+                    # make a delay due to Instagram restriction
+                    time.sleep(random.randrange(80, 100))
+        except Exception as ex:
+            print(ex)
 
-test = InstaBot(username, password)
+    def like_profile(self, url_profile):
+
+        try:
+            time.sleep(random.randrange(3, 4))
+
+            self.open_profile(url_profile)
+            self.scrolling_get_urls()
+
+            with open(f'{self.file_name}.txt', 'r') as file_reader:
+                for like_post in file_reader:
+                    self.like_exactly_post(like_post)
+                    # !!!!!!!!!!! MAKE DELAY ONLY FOR like_exactly_post WHEN LIKE NOT PUT
+                    time.sleep(random.randrange(80, 100))
+        except Exception as ex:
+            print(ex)
+
+        time.sleep(10)
+        self.exit()
+
+
+test = InstaBot(username, password, "test_list")
 
 test.sign_in()
-test.like_by_hash("dog")
+test.like_profile("https://www.instagram.com/rocketskywalker/")
