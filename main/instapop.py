@@ -75,13 +75,12 @@ class InstaBot:
 
     def open_profile(self, link):
         browser = self.browser
-
         try:
             browser.get(link)
         except NoSuchElementException:
             print("Sorry, this page isn't available.")
 
-        time.sleep(random.randrange(2, ))
+        time.sleep(random.randrange(2))
 
     # scrolling page and grab all url of posts
     def scrolling_get_urls(self):
@@ -135,14 +134,12 @@ class InstaBot:
             like = browser.find_elements_by_css_selector("svg[fill = '#ed4956']")
             if like:
                 print("Like already put")
-                # self.exit()
-                # !!!!!!!!!!!!!! FIGURE OUT HOW TO CHANGE IT FOR EXPLICITLY EXECUTION
+                self.exit()
             else:
                 browser.find_element_by_xpath(
                     "/html/body/div[1]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button").click()
                 time.sleep(random.randrange(2, 4))
-                # self.exit()
-                # !!!!!!!!!!!!!! FIGURE OUT HOW TO CHANGE IT FOR EXPLICITLY EXECUTION
+                self.exit()
         except Exception as ex:
             print(ex)
 
@@ -185,18 +182,35 @@ class InstaBot:
             print(ex)
 
     def like_profile(self, url_profile):
+        browser = self.browser
 
         try:
-            time.sleep(random.randrange(3, 4))
+            time.sleep(random.randrange(1, 3))
 
             self.open_profile(url_profile)
             self.scrolling_get_urls()
 
             with open(f'{self.file_name}.txt', 'r') as file_reader:
                 for like_post in file_reader:
-                    self.like_exactly_post(like_post)
-                    # !!!!!!!!!!! MAKE DELAY ONLY FOR like_exactly_post WHEN LIKE NOT PUT
-                    time.sleep(random.randrange(80, 100))
+                    time.sleep(1)
+                    browser.get(like_post)
+                    time.sleep(random.randrange(2))
+
+                    wrong_userpage = "/html/body/div[1]/section/main/div/h2"
+                    if self.xpath_existing(wrong_userpage):
+                        print("The post does not exist!")
+                    else:
+                        print("Post detected! Put our like!")
+
+                    like = browser.find_elements_by_css_selector("svg[fill = '#ed4956']")
+                    if like:
+                        print("Like already put")
+                    else:
+                        # make a delay due to Instagram restriction
+                        time.sleep(random.randrange(80, 100))
+                        browser.find_element_by_xpath(
+                            "/html/body/div[1]/section/main/div/div[1]/article/div[3]/section[1]/span[1]/button").click()
+                        time.sleep(random.randrange(2, 3))
         except Exception as ex:
             print(ex)
 
@@ -208,3 +222,5 @@ test = InstaBot(username, password, "test_list")
 
 test.sign_in()
 test.like_profile("https://www.instagram.com/rocketskywalker/")
+
+# !!!!!!!!!!!!!! CLEAN TRY EXCEPT BLOCKS WHERE THEY NONSENSICAL
