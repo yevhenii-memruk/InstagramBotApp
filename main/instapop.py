@@ -2,10 +2,12 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from user_data import username, password
-import time
+import time, urllib.request
 import random
 import os
 import requests
+
+from bs4 import BeautifulSoup as bs
 
 """Instagram Bot - InstaPOP.
 
@@ -15,9 +17,11 @@ This bot will help you keep your account more relevant and raise your activity t
 Features:
 -Auto liking posts
 -Auto subscription
+-Auto liking posts by hashtag
 -Make a list of all subscribers
 -Download all media from instagram account
 -Unsubscribe from profiles that do not follow you
+-Automatic browsing of stories
 """
 
 
@@ -82,21 +86,21 @@ class InstaBot:
 
         time.sleep(random.randrange(2))
 
-    # scrolling page and grab all url of posts
+    # scrolling page and grab all url of posts into file
     def scrolling_get_urls(self):
         browser = self.browser
         all_post = []
 
-        try:
-            posts_num = int(
-                browser.find_element_by_xpath(
-                    "/html/body/div[1]/section/main/div/header/section/ul/li[1]/span/span").text)
-            # 12 posts loads each scrolling
-            if posts_num < 12:
-                loops_count = 1
-            else:
-                loops_count = int(posts_num / 12)
+        posts_num = int(
+            browser.find_element_by_xpath(
+                "/html/body/div[1]/section/main/div/header/section/ul/li[1]/span/span").text)
+        # 12 posts loads each scrolling
+        if posts_num < 12:
+            loops_count = 1
+        else:
+            loops_count = int(posts_num / 12)
 
+        try:
             for x in range(loops_count):
                 time.sleep(random.randrange(1, 2))
                 tag_a = browser.find_elements_by_tag_name("a")
@@ -109,22 +113,22 @@ class InstaBot:
 
                 browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(random.randrange(3, 5))
-
-            with open(f'{self.file_name}.txt', "w") as file_posts:
-                for z in all_post:
-                    file_posts.write(z + "\n")
         except Exception as ex:
             print(ex)
+
+        with open(f'{self.file_name}.txt', "w") as file_posts:
+            for z in all_post:
+                file_posts.write(z + "\n")
 
     # liking post by certain link
     def like_exactly_post(self, link_post):
         browser = self.browser
 
-        try:
-            time.sleep(3)
-            browser.get(link_post)
-            time.sleep(3)
+        time.sleep(3)
+        browser.get(link_post)
+        time.sleep(3)
 
+        try:
             wrong_userpage = "/html/body/div[1]/section/main/div/h2"
             if self.xpath_existing(wrong_userpage):
                 print("The post does not exist!")
@@ -151,6 +155,7 @@ class InstaBot:
             browser.get(f"https://www.instagram.com/explore/tags/{hashtag}/")
             time.sleep(5)
 
+            # !!! make number of scrolling manually change
             for x in range(1, 5):
                 browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(random.randrange(3, 5))
@@ -184,12 +189,12 @@ class InstaBot:
     def like_profile(self, url_profile):
         browser = self.browser
 
+        time.sleep(random.randrange(1, 3))
+
+        self.open_profile(url_profile)
+        self.scrolling_get_urls()
+
         try:
-            time.sleep(random.randrange(1, 3))
-
-            self.open_profile(url_profile)
-            self.scrolling_get_urls()
-
             with open(f'{self.file_name}.txt', 'r') as file_reader:
                 for like_post in file_reader:
                     time.sleep(1)
@@ -214,13 +219,109 @@ class InstaBot:
         except Exception as ex:
             print(ex)
 
-        time.sleep(10)
         self.exit()
+
+    def download_media(self, url_profile):
+        browser = self.browser
+        images_unique = []
+        file_name = url_profile.split("/")[-2]
+
+        self.open_profile(url_profile)
+        self.scrolling_get_urls()
+
+        if os.path.exists(f'{file_name}'):
+            print("Folder exist yet!")
+        else:
+            os.mkdir(f"{file_name}")
+
+        # Clean folder with content
+        for f in os.listdir(f"{file_name}"):
+            os.remove(os.path.join(file_name, f))
+
+    # OPTION 0
+        # Download only images!
+        # Make futures ( download video )
+        with open(f"{self.file_name}.txt", "r") as file_reader:
+            for like_post in file_reader:
+                browser.get(like_post)
+
+                try:
+                    soup = bs(browser.page_source, 'lxml')
+
+                    ''' Extract the url of the image from the source code'''
+                    img = soup.find('img', class_='FFVAD')
+                    video_src = "/html/body/div[1]/section/main/div/div[1]/article/div[2]/div/div/div[1]/div/div/video"
+                    if self.xpath_existing(video_src):
+                        continue
+                    img_url = img['src']
+
+                    '''Download the image via the url using the requests library'''
+                    r = requests.get(img_url)
+
+                    with open(f"{file_name}"+"/"+"instagram" + str(time.time()) + ".png", 'wb') as f:
+                        f.write(r.content)
+                except Exception as ex:
+                    print(ex)
+
+    # OPTION 1
+        # download_url = ''
+        # with open(f"{self.file_name}.txt", "r") as file_reader:
+        #     for like_post in file_reader:
+        #         browser.get(like_post)
+        #         shortcode = browser.current_url.split("/")[-2]
+        #         time.sleep(5)
+        #         if browser.find_element_by_css_selector("img[style='object-fit: cover;']") is not None:
+        #             download_url = browser.find_element_by_css_selector(
+        #                 "img[style='object-fit: cover;']").get_attribute(
+        #                 'src')
+        #             urllib.request.urlretrieve(download_url, '{}.jpg'.format(shortcode))
+        #         else:
+        #             download_url = browser.find_element_by_css_selector("video[type='video/mp4']").get_attribute('src')
+        #             urllib.request.urlretrieve(download_url, '{}.mp4'.format(shortcode))
+        #         time.sleep(5)
+
+    # OPTION 2
+        # button_next = ["/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button[2]/div",
+        #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button",
+        #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button/div"]
+        # media_url_list = []
+        # post_id = url_profile.split("/")[-2]
+        #
+        # self.open_profile(url_profile)
+        # self.scrolling_get_urls()
+        #
+        # with open(f"{self.file_name}.txt", "r") as file_reader:
+        #     for like_post in file_reader:
+        #         browser.get(like_post)
+        #
+        #         tag_img = browser.find_elements_by_tag_name("img")
+        #
+        #         video_src = "/html/body/div[1]/section/main/div/div[1]/article/div[2]/div/div/div[1]/div/div/video"
+        #         single_src_img = [media_url_list.append(i.get_attribute("src")) for i in tag_img if
+        #                           "Photo shared by" in i.get_attribute("alt") or "Photo by" in i.get_attribute("alt")]
+        #         # save images
+        #         for save_link in media_url_list:
+        #             get_media = requests.get(save_link)
+        #             with open(f"{post_id}_img.jpg", "wb") as img_file:
+        #                 img_file.write(get_media.content)
+        #
+        #         if self.xpath_existing(video_src):
+        #             tag_video = browser.find_elements_by_tag_name("video")
+        #             single_src_video = [media_url_list.append(i.get_attribute("src")) for i in tag_video]
+        #
+        #         for i in button_next:
+        #             if self.xpath_existing(i):
+        #                 browser.find_element_by_xpath(i).click()
+        #
+        #         with open("media_url_list.txt", "w") as file:
+        #             for i in media_url_list:
+        #                 file.write(i + "\n")
+        #
+        # self.exit()
 
 
 test = InstaBot(username, password, "test_list")
 
 test.sign_in()
-test.like_profile("https://www.instagram.com/rocketskywalker/")
-
-# !!!!!!!!!!!!!! CLEAN TRY EXCEPT BLOCKS WHERE THEY NONSENSICAL
+# test.like_profile("https://www.instagram.com/rocketskywalker/")
+test.download_media("https://www.instagram.com/rocketskywalker/")
