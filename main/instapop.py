@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 from user_data import username, password
-import time, urllib.request
+import time
 import random
 import os
 import requests
@@ -129,8 +129,8 @@ class InstaBot:
         time.sleep(3)
 
         try:
-            wrong_userpage = "/html/body/div[1]/section/main/div/h2"
-            if self.xpath_existing(wrong_userpage):
+            wrong_user_page = "/html/body/div[1]/section/main/div/h2"
+            if self.xpath_existing(wrong_user_page):
                 print("The post does not exist!")
             else:
                 print("Post detected! Put our like!")
@@ -201,8 +201,8 @@ class InstaBot:
                     browser.get(like_post)
                     time.sleep(random.randrange(2))
 
-                    wrong_userpage = "/html/body/div[1]/section/main/div/h2"
-                    if self.xpath_existing(wrong_userpage):
+                    wrong_user_page = "/html/body/div[1]/section/main/div/h2"
+                    if self.xpath_existing(wrong_user_page):
                         print("The post does not exist!")
                     else:
                         print("Post detected! Put our like!")
@@ -223,7 +223,6 @@ class InstaBot:
 
     def download_media(self, url_profile):
         browser = self.browser
-        images_unique = []
         file_name = url_profile.split("/")[-2]
 
         self.open_profile(url_profile)
@@ -238,9 +237,9 @@ class InstaBot:
         for f in os.listdir(f"{file_name}"):
             os.remove(os.path.join(file_name, f))
 
-    # OPTION 0
+        # OPTION 0
         # Download only images!
-        # Make futures ( download video )
+        # Make futures ( download video, download multiple post )
         with open(f"{self.file_name}.txt", "r") as file_reader:
             for like_post in file_reader:
                 browser.get(like_post)
@@ -258,70 +257,168 @@ class InstaBot:
                     '''Download the image via the url using the requests library'''
                     r = requests.get(img_url)
 
-                    with open(f"{file_name}"+"/"+"instagram" + str(time.time()) + ".png", 'wb') as f:
+                    with open(f"{file_name}" + "/" + "instagram" + str(time.time()) + ".png", 'wb') as f:
                         f.write(r.content)
                 except Exception as ex:
                     print(ex)
+        self.exit()
 
     # OPTION 1
-        # download_url = ''
-        # with open(f"{self.file_name}.txt", "r") as file_reader:
-        #     for like_post in file_reader:
-        #         browser.get(like_post)
-        #         shortcode = browser.current_url.split("/")[-2]
-        #         time.sleep(5)
-        #         if browser.find_element_by_css_selector("img[style='object-fit: cover;']") is not None:
-        #             download_url = browser.find_element_by_css_selector(
-        #                 "img[style='object-fit: cover;']").get_attribute(
-        #                 'src')
-        #             urllib.request.urlretrieve(download_url, '{}.jpg'.format(shortcode))
-        #         else:
-        #             download_url = browser.find_element_by_css_selector("video[type='video/mp4']").get_attribute('src')
-        #             urllib.request.urlretrieve(download_url, '{}.mp4'.format(shortcode))
-        #         time.sleep(5)
+    # download_url = ''
+    # with open(f"{self.file_name}.txt", "r") as file_reader:
+    #     for like_post in file_reader:
+    #         browser.get(like_post)
+    #         shortcode = browser.current_url.split("/")[-2]
+    #         time.sleep(5)
+    #         if browser.find_element_by_css_selector("img[style='object-fit: cover;']") is not None:
+    #             download_url = browser.find_element_by_css_selector(
+    #                 "img[style='object-fit: cover;']").get_attribute(
+    #                 'src')
+    #             urllib.request.urlretrieve(download_url, '{}.jpg'.format(shortcode))
+    #         else:
+    #             download_url = browser.find_element_by_css_selector("video[type='video/mp4']").get_attribute('src')
+    #             urllib.request.urlretrieve(download_url, '{}.mp4'.format(shortcode))
+    #         time.sleep(5)
 
     # OPTION 2
-        # button_next = ["/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button[2]/div",
-        #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button",
-        #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button/div"]
-        # media_url_list = []
-        # post_id = url_profile.split("/")[-2]
-        #
-        # self.open_profile(url_profile)
-        # self.scrolling_get_urls()
-        #
-        # with open(f"{self.file_name}.txt", "r") as file_reader:
-        #     for like_post in file_reader:
-        #         browser.get(like_post)
-        #
-        #         tag_img = browser.find_elements_by_tag_name("img")
-        #
-        #         video_src = "/html/body/div[1]/section/main/div/div[1]/article/div[2]/div/div/div[1]/div/div/video"
-        #         single_src_img = [media_url_list.append(i.get_attribute("src")) for i in tag_img if
-        #                           "Photo shared by" in i.get_attribute("alt") or "Photo by" in i.get_attribute("alt")]
-        #         # save images
-        #         for save_link in media_url_list:
-        #             get_media = requests.get(save_link)
-        #             with open(f"{post_id}_img.jpg", "wb") as img_file:
-        #                 img_file.write(get_media.content)
-        #
-        #         if self.xpath_existing(video_src):
-        #             tag_video = browser.find_elements_by_tag_name("video")
-        #             single_src_video = [media_url_list.append(i.get_attribute("src")) for i in tag_video]
-        #
-        #         for i in button_next:
-        #             if self.xpath_existing(i):
-        #                 browser.find_element_by_xpath(i).click()
-        #
-        #         with open("media_url_list.txt", "w") as file:
-        #             for i in media_url_list:
-        #                 file.write(i + "\n")
-        #
-        # self.exit()
+    # button_next = ["/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button[2]/div",
+    #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button",
+    #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button/div"]
+    # media_url_list = []
+    # post_id = url_profile.split("/")[-2]
+    #
+    # self.open_profile(url_profile)
+    # self.scrolling_get_urls()
+    #
+    # with open(f"{self.file_name}.txt", "r") as file_reader:
+    #     for like_post in file_reader:
+    #         browser.get(like_post)
+    #
+    #         tag_img = browser.find_elements_by_tag_name("img")
+    #
+    #         video_src = "/html/body/div[1]/section/main/div/div[1]/article/div[2]/div/div/div[1]/div/div/video"
+    #         single_src_img = [media_url_list.append(i.get_attribute("src")) for i in tag_img if
+    #                           "Photo shared by" in i.get_attribute("alt") or "Photo by" in i.get_attribute("alt")]
+    #         # save images
+    #         for save_link in media_url_list:
+    #             get_media = requests.get(save_link)
+    #             with open(f"{post_id}_img.jpg", "wb") as img_file:
+    #                 img_file.write(get_media.content)
+    #
+    #         if self.xpath_existing(video_src):
+    #             tag_video = browser.find_elements_by_tag_name("video")
+    #             single_src_video = [media_url_list.append(i.get_attribute("src")) for i in tag_video]
+    #
+    #         for i in button_next:
+    #             if self.xpath_existing(i):
+    #                 browser.find_element_by_xpath(i).click()
+    #
+    #         with open("media_url_list.txt", "w") as file:
+    #             for i in media_url_list:
+    #                 file.write(i + "\n")
+    #
+    #
 
+    # follow to exact profile
+    def follow_exact_profile(self, url_profile):
+        browser = self.browser
+        follow_button = "/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button"
+
+        self.open_profile(url_profile)
+        if self.xpath_existing(follow_button):
+            time.sleep(3)
+            browser.find_element_by_xpath(follow_button).click()
+        else:
+            pass
+
+        self.exit()
+
+    # follow to all of user's followers
+    def follow_engine(self, url_profile):
+        num_scroll = 1
+        browser = self.browser
+        browser.get(url_profile)
+        name_user = url_profile.split("/")[-2]
+
+        time.sleep(2)
+
+        # Create User folder
+        if os.path.exists(f"{name_user}"):
+            print("Folder already exist!")
+        else:
+            print("Create folder!")
+            os.mkdir(name_user)
+
+        num_followers = int(
+            browser.find_element_by_xpath('/html/body/div[1]/section/main/div/header/section/ul/li[2]/a/span').text)
+        if num_followers <= 12:
+            num_scroll = 1
+        if num_followers > 12:
+            num_scroll = int(num_followers / 12)
+
+        browser.find_element_by_xpath("/html/body/div[1]/section/main/div/header/section/ul/li[2]/a").click()
+
+        time.sleep(3)
+
+        follower_ul = browser.find_element_by_xpath("/html/body/div[5]/div/div/div[2]")
+        follower_urls = []
+
+        for scroll in range(num_scroll):
+            browser.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", follower_ul)
+            time.sleep(2)
+
+        all_divs = follower_ul.find_elements_by_tag_name("li")
+
+        for link_follower in all_divs:
+            link_follower = link_follower.find_element_by_tag_name("a").get_attribute("href")
+            follower_urls.append(link_follower)
+
+        with open(f"{name_user}/{name_user}.txt", "w") as file_urls:
+            for iter_link in follower_urls:
+                file_urls.write(iter_link + "\n")
+
+        time.sleep(random.randrange(2, 3))
+
+        with open(f"{name_user}/{name_user}.txt") as urls_reader:
+            for user_url in urls_reader:
+                try:
+                    with open(f"{name_user}/{name_user}_following.txt") as check_list:
+                        if user_url in check_list.readlines():
+                            continue
+                except Exception as ex:
+                    print("File do not exist yet!")
+
+                browser.get(user_url)
+
+                follow_button = [
+                    "/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button",
+                    "/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/button"]
+                already_followed_button = "/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div[2]/div/span/span[1]/button/div/span"
+                our_profile = "/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/a"
+
+                time.sleep(3)
+
+                if self.xpath_existing(already_followed_button):
+                    print("You have already subscribed to this user!")
+                    continue
+                if self.xpath_existing(follow_button[0]):
+                    browser.find_element_by_xpath(follow_button[0]).click()
+                    print("Following to " + user_url.split("/")[-2])
+                if self.xpath_existing(our_profile):
+                    print("It's me!")
+                elif self.xpath_existing(follow_button[1]):
+                    browser.find_element_by_xpath(follow_button[1]).click()
+                    print("Following to " + user_url.split("/")[-2])
+
+                # create a file to skip our following users
+                with open(f"{name_user}/{name_user}_following.txt", "a") as following:
+                    following.write(user_url)
+
+                time.sleep(random.randrange(120, 180))
 
 test = InstaBot(username, password, "test_list")
 
 test.sign_in()
 # test.like_profile("https://www.instagram.com/rocketskywalker/")
-test.download_media("https://www.instagram.com/rocketskywalker/")
+# test.download_media("https://www.instagram.com/rocketskywalker/")
+test.follow_engine("https://www.instagram.com/anny_eyebrow/")
