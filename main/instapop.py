@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
-from user_data import username, password
+from user_data import users_info
 import time
 import random
 import os
@@ -55,7 +55,7 @@ class InstaBot:
             browser.maximize_window()
             browser.implicitly_wait(10)
             # closing pop-up window
-            browser.find_element_by_xpath("/html/body/div[2]/div/div/button[1]").click()
+            browser.find_element_by_xpath("/html/body/div[3]/div/div/button[1]").click()
             time.sleep(1)
 
             name_tag = browser.find_element_by_name("username")
@@ -263,62 +263,6 @@ class InstaBot:
                     print(ex)
         self.exit()
 
-    # OPTION 1
-    # download_url = ''
-    # with open(f"{self.file_name}.txt", "r") as file_reader:
-    #     for like_post in file_reader:
-    #         browser.get(like_post)
-    #         shortcode = browser.current_url.split("/")[-2]
-    #         time.sleep(5)
-    #         if browser.find_element_by_css_selector("img[style='object-fit: cover;']") is not None:
-    #             download_url = browser.find_element_by_css_selector(
-    #                 "img[style='object-fit: cover;']").get_attribute(
-    #                 'src')
-    #             urllib.request.urlretrieve(download_url, '{}.jpg'.format(shortcode))
-    #         else:
-    #             download_url = browser.find_element_by_css_selector("video[type='video/mp4']").get_attribute('src')
-    #             urllib.request.urlretrieve(download_url, '{}.mp4'.format(shortcode))
-    #         time.sleep(5)
-
-    # OPTION 2
-    # button_next = ["/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button[2]/div",
-    #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button",
-    #                "/html/body/div[5]/div[2]/div/article/div[2]/div/div[1]/div[2]/div/button/div"]
-    # media_url_list = []
-    # post_id = url_profile.split("/")[-2]
-    #
-    # self.open_profile(url_profile)
-    # self.scrolling_get_urls()
-    #
-    # with open(f"{self.file_name}.txt", "r") as file_reader:
-    #     for like_post in file_reader:
-    #         browser.get(like_post)
-    #
-    #         tag_img = browser.find_elements_by_tag_name("img")
-    #
-    #         video_src = "/html/body/div[1]/section/main/div/div[1]/article/div[2]/div/div/div[1]/div/div/video"
-    #         single_src_img = [media_url_list.append(i.get_attribute("src")) for i in tag_img if
-    #                           "Photo shared by" in i.get_attribute("alt") or "Photo by" in i.get_attribute("alt")]
-    #         # save images
-    #         for save_link in media_url_list:
-    #             get_media = requests.get(save_link)
-    #             with open(f"{post_id}_img.jpg", "wb") as img_file:
-    #                 img_file.write(get_media.content)
-    #
-    #         if self.xpath_existing(video_src):
-    #             tag_video = browser.find_elements_by_tag_name("video")
-    #             single_src_video = [media_url_list.append(i.get_attribute("src")) for i in tag_video]
-    #
-    #         for i in button_next:
-    #             if self.xpath_existing(i):
-    #                 browser.find_element_by_xpath(i).click()
-    #
-    #         with open("media_url_list.txt", "w") as file:
-    #             for i in media_url_list:
-    #                 file.write(i + "\n")
-    #
-    #
-
     # follow to exact profile
     def follow_exact_profile(self, url_profile):
         browser = self.browser
@@ -349,8 +293,13 @@ class InstaBot:
             print("Create folder!")
             os.mkdir(name_user)
 
-        num_followers = int(
-            browser.find_element_by_xpath('/html/body/div[1]/section/main/div/header/section/ul/li[2]/a/span').text)
+        num_followers = browser.find_element_by_xpath(
+                '/html/body/div[1]/section/main/div/header/section/ul/li[2]/a/span').get_attribute("title")
+        if "," in num_followers:
+            num_followers = int("".join(num_followers.split(",")))
+        else:
+            num_followers = int(num_followers)
+
         if num_followers <= 12:
             num_scroll = 1
         if num_followers > 12:
@@ -416,9 +365,70 @@ class InstaBot:
 
                 time.sleep(random.randrange(120, 180))
 
-test = InstaBot(username, password, "test_list")
+    # send message to certain account
+    def send_direct_message(self, usernames="", message="", img_path=""):
 
-test.sign_in()
-# test.like_profile("https://www.instagram.com/rocketskywalker/")
-# test.download_media("https://www.instagram.com/rocketskywalker/")
-test.follow_engine("https://www.instagram.com/anny_eyebrow/")
+        browser = self.browser
+
+        direct_message_button = "/html/body/div[1]/section/nav/div[2]/div/div/div[3]/div/div[2]/a"
+
+        if not self.xpath_existing(direct_message_button):
+            print("Message button has not found!")
+            self.exit()
+        else:
+            print("Send message..")
+            browser.find_element_by_xpath(direct_message_button).click()
+            time.sleep(random.randrange(2, 4))
+
+        # close pop-up window
+        if self.xpath_existing("/html/body/div[5]/div/div/div"):
+            browser.find_element_by_xpath("/html/body/div[5]/div/div/div/div[3]/button[2]").click()
+        time.sleep(random.randrange(2, 4))
+
+        browser.find_element_by_xpath(
+            "/html/body/div[1]/section/div/div[2]/div/div/div[2]/div/div[3]/div/button").click()
+        time.sleep(random.randrange(2, 4))
+
+        # send message to several users
+        for user in usernames:
+            # enter the recipient's name
+            to_input = browser.find_element_by_xpath("/html/body/div[5]/div/div/div[2]/div[1]/div/div[2]/input")
+            to_input.send_keys(user)
+            time.sleep(random.randrange(2, 4))
+
+            # choose recipient from list
+            browser.find_element_by_xpath("/html/body/div[5]/div/div/div[2]/div[2]/div[1]").find_element_by_tag_name(
+                "button").click()
+            time.sleep(random.randrange(2, 4))
+
+        browser.find_element_by_xpath("/html/body/div[5]/div/div/div[1]/div/div[2]/div/button/div").click()
+        time.sleep(random.randrange(2, 4))
+
+        # sending text message
+        if message:
+            text_message_area = browser.find_element_by_xpath(
+                "/html/body/div[1]/section/div/div[2]/div/div/div[2]/div[2]/div/div[2]/div/div/div[2]/textarea")
+            text_message_area.clear()
+            text_message_area.send_keys(message)
+            time.sleep(random.randrange(2, 4))
+            text_message_area.send_keys(Keys.ENTER)
+            print(f"Message for {usernames} sent succeed!")
+            time.sleep(random.randrange(2, 4))
+
+        # sending images
+        if img_path:
+            send_img_input = browser.find_element_by_xpath(
+                "/html/body/div[1]/section/div/div[2]/div/div/div[2]/div[2]/div/div[2]/div/div/form/input")
+            send_img_input.send_keys(img_path)
+            print(f"Image for {usernames} sent succeed!")
+            time.sleep(random.randrange(2, 4))
+
+        self.exit()
+
+
+# test = InstaBot(username, password, "test_list")
+
+for user, user_data in users_info.items():
+    username = user_data['login']
+    password = user_data['password']
+    test = InstaBot(username, password, "test_list")
